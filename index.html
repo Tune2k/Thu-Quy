@@ -296,7 +296,9 @@
                 return total;
             });
 
-            const perPerson = totalAll / teamSize;
+            const perPerson = Math.round(totalAll / teamSize);
+
+
 
             let html = `<h3>Tổng cộng: ${totalAll.toLocaleString()} ${currency}</h3>`;
             html += `<h4>Mỗi người trả: ${perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}</h4>`;
@@ -304,7 +306,9 @@
 
             buyers.forEach((b, i) => {
                 const diff = perPerson - totals[i];
-                const formatted = Math.abs(diff).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                const formatted = Math.round(Math.abs(diff)).toLocaleString() + ` ${currency}`;
+
+
                 if (diff > 0) {
                     html += `<tr><td>${b.name || '---'}</td><td class="negative">Nộp thêm ${formatted}</td></tr>`;
                 } else {
@@ -387,7 +391,7 @@
             const currency = document.getElementById('currency').value;
 
             const totals = buyers.map(b => b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0));
-            const perPerson = total / teamSize;
+            const perPerson = Math.round(total / teamSize);
 
             allData.push(["Tổng kết chi trả"]);
             merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
