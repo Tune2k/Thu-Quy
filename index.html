@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chia Tiền Nhóm</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #e3f2fd, #fff3e0);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .controls input,
+        .controls select,
+        .controls button {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 14px;
+        }
+
+        .buyer-box {
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .buyer-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .buyer-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .buyer-header input {
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-bottom: 2px solid #2196f3;
+            outline: none;
+        }
+
+        .products {
+            margin-top: 10px;
+        }
+
+        .product-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 8px;
+        }
+
+        .product-row input {
+            flex: 1;
+            padding: 8px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        .product-row button {
+            background: #f44336;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            cursor: pointer;
+        }
+
+        .add-product,
+        .remove-buyer {
+            background: #4caf50;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            margin-top: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .remove-buyer {
+            background: #f44336;
+        }
+
+        .product-summary-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            font-weight: bold;
+            padding: 10px 0;
+            border-bottom: 2px solid #eee;
+            color: #333;
+        }
+
+        .summary-box {
+            background-color: #ffffff;
+            border: 2px solid #e0e0e0;
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 30px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .summary-box h3 {
+            margin-top: 0;
+        }
+
+        #all-products-list {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+            padding-top: 10px;
+        }
+
+        #all-products-list div {
+            padding: 6px 10px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
+
+        .result-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .result-table th,
+        .result-table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .positive {
+            color: green;
+        }
+
+        .negative {
+            color: red;
+        }
+
+        .all-products-box {
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 12px;
+            font-family: 'Segoe UI', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        .all-products-box:hover {
+            transform: translateY(-2px);
+        }
+
+        .all-products-box h2 {
+            font-size: 18px;
+            color: #333;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 8px;
+        }
+
+        .all-products-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .all-products-list li {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 14px;
+            margin-bottom: 8px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #2196f3;
+            border-radius: 8px;
+            transition: background 0.2s;
+        }
+
+        .all-products-list li:hover {
+            background-color: #e3f2fd;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>💸 Chia Tiền Nhóm</h1>
+
+    <div class="controls">
+        <button onclick="addBuyer()">➕ Thêm Người Mua</button>
+        <label>Số người chia: <input type="number" id="teamSize" onchange="saveTeamSize(); calculateAll();" />
+        </label>
+        <label>Đơn vị:
+            <select id="currency" onchange="calculateAll()">
+                <option value="₫">₫</option>
+                <option value="$">$</option>
+                <option value="€">€</option>
+            </select>
+        </label>
+        <button onclick="exportExcel()">📥 Xuất Excel</button>
+
+    </div>
+
+    <div id="buyersContainer"></div>
+
+    <div class="summary-box" id="all-products">
+        <h2>Tất cả sản phẩm</h2>
+        <div class="product-summary-header">
+            <span>Tên sản phẩm</span>
+            <span>Giá</span>
+        </div>
+        <div id="all-products-list"></div>
+    </div>
+
+
+    <div class="summary-box" id="summary"></div>
+
+    <script>
+        let buyers = JSON.parse(localStorage.getItem('buyers') || '[]');
+
+        function saveData() {
+            localStorage.setItem('buyers', JSON.stringify(buyers));
+        }
+
+        function addBuyer(name = '', products = []) {
+            buyers.push({ name, products });
+            render();
+            saveData();
+        }
+
+        function removeBuyer(index) {
+            buyers.splice(index, 1);
+            render();
+            saveData();
+        }
+
+        function addProduct(index, product = '', price = '') {
+            buyers[index].products.push({ product, price });
+            render();
+            saveData();
+        }
+
+        function removeProduct(buyerIndex, productIndex) {
+            buyers[buyerIndex].products.splice(productIndex, 1);
+            render();
+            saveData();
+        }
+
+        function updateBuyer(index, field, value) {
+            buyers[index][field] = value;
+            saveData();
+        }
+
+        function updateProduct(buyerIndex, productIndex, field, value) {
+            buyers[buyerIndex].products[productIndex][field] = value;
+            saveData();
+            calculateAll();
+        }
+
+        function calculateAll() {
+            const teamSize = parseInt(document.getElementById('teamSize').value) || 1;
+            const currency = document.getElementById('currency').value;
+            let totalAll = 0;
+
+            const totals = buyers.map(b => {
+                const total = b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
+                totalAll += total;
+                return total;
+            });
+
+            const perPerson = totalAll / teamSize;
+
+            let html = `<h3>Tổng cộng: ${totalAll.toLocaleString()} ${currency}</h3>`;
+            html += `<h4>Mỗi người trả: ${perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 })} ${currency}</h4>`;
+            html += `<table class="result-table"><tr><th>Người mua</th><th>Cần trả</th></tr>`;
+
+            buyers.forEach((b, i) => {
+                const diff = perPerson - totals[i];
+                const formatted = Math.abs(diff).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                if (diff > 0) {
+                    html += `<tr><td>${b.name || '---'}</td><td class="negative">Nộp thêm ${formatted}</td></tr>`;
+                } else {
+                    html += `<tr><td>${b.name || '---'}</td><td class="positive">Hoàn lại ${formatted}</td></tr>`;
+                }
+            });
+
+            // ✅ Thêm 1 hàng "Những người còn lại" nếu số người chia > số người mua
+            if (teamSize > buyers.length) {
+                const othersCount = teamSize - buyers.length;
+                const amount = perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                html += `<tr><td>Những người còn lại (${othersCount} người)</td><td class="negative">Nộp thêm ${amount}</td></tr>`;
+            }
+
+
+
+            html += '</table>';
+            document.getElementById('summary').innerHTML = html;
+
+            updateAllProductsList();
+        }
+
+
+        function exportExcel() {
+            const wb = XLSX.utils.book_new();
+            const allData = [];
+            const merges = [];
+            const styles = {};
+
+            let rowIndex = 0;
+
+            // === Bảng: Chi tiết từng người mua ===
+            buyers.forEach(buyer => {
+                // Tiêu đề người mua
+                allData.push([`Người mua: ${buyer.name}`]);
+                merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+                rowIndex++;
+
+                // Dòng tiêu đề bảng sản phẩm
+                const table = [["Sản phẩm", "Giá"]];
+                buyer.products.forEach(p => {
+                    table.push([p.product, Number(p.price)]);
+                });
+                const total = buyer.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
+                table.push(["Tổng cộng", total]);
+
+                table.forEach((row, i) => {
+                    allData.push(row);
+                    rowIndex++;
+                });
+
+                allData.push([]);
+                rowIndex++;
+            });
+
+            // === Bảng: Tổng hợp tất cả sản phẩm ===
+            allData.push(["Tổng hợp tất cả sản phẩm"]);
+            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+            rowIndex++;
+
+            const allProducts = [["Sản phẩm", "Giá"]];
+            buyers.forEach(buyer => {
+                buyer.products.forEach(p => {
+                    allProducts.push([p.product, Number(p.price)]);
+                });
+            });
+            const total = buyers.reduce((sum, b) => sum + b.products.reduce((s, p) => s + parseFloat(p.price || 0), 0), 0);
+            allProducts.push(["Tổng cộng tất cả", total]);
+
+            allProducts.forEach(row => {
+                allData.push(row);
+                rowIndex++;
+            });
+
+            allData.push([]);
+            rowIndex++;
+
+            // === Bảng: Tổng kết chi trả ===
+            const teamSize = parseInt(document.getElementById('teamSize').value) || 1;
+            const currency = document.getElementById('currency').value;
+
+            const totals = buyers.map(b => b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0));
+            const perPerson = total / teamSize;
+
+            allData.push(["Tổng kết chi trả"]);
+            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+            rowIndex++;
+
+            const summary = [["Người mua", "Cần trả"]];
+            buyers.forEach((b, i) => {
+                const diff = perPerson - totals[i];
+                const formatted = Math.abs(diff).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                if (diff > 0) {
+                    summary.push([b.name, `Nộp thêm ${formatted}`]);
+                } else {
+                    summary.push([b.name, `Trả lại ${formatted}`]);
+                }
+            });
+
+            if (teamSize > buyers.length) {
+                const othersCount = teamSize - buyers.length;
+                const amount = perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                summary.push([`Những người còn lại (${othersCount} người)`, `Nộp thêm ${amount}`]);
+            }
+
+
+
+            summary.forEach(row => {
+                allData.push(row);
+                rowIndex++;
+            });
+
+            // === Tạo sheet ===
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            ws['!merges'] = merges;
+            ws['!cols'] = [{ wch: 25 }, { wch: 25 }]; // Độ rộng cột
+
+            // Thêm border cho tất cả các ô có giá trị
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = ws[cell_address];
+                    if (cell && cell.v !== undefined) {
+                        if (!cell.s) cell.s = {};
+                        cell.s.border = {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        };
+                    }
+                }
+            }
+
+
+            // Ghi sheet
+            XLSX.utils.book_append_sheet(wb, ws, "Tổng hợp");
+
+            // Xuất file
+            XLSX.writeFile(wb, "chia_tien.xlsx");
+        }
+
+
+
+        function render() {
+            const container = document.getElementById('buyersContainer');
+            container.innerHTML = '';
+            buyers.forEach((b, i) => {
+                const box = document.createElement('div');
+                box.className = 'buyer-box';
+                box.dataset.index = i; // dùng cho formatAllPrices
+                box.innerHTML = `
+                    <div class="buyer-header">
+                        <input placeholder="Tên người mua..." value="${b.name}" 
+                        onkeydown="handleEnter(event, ${i})" 
+                        onchange="updateBuyer(${i}, 'name', this.value)" />
+                        <button class="remove-buyer" onclick="removeBuyer(${i})">🗑️</button>
+                    </div>
+                    <div class="products">
+                        ${b.products.map((p, j) => `
+                        <div class="product-row">
+                            <input placeholder="Sản phẩm" value="${p.product}" onchange="updateProduct(${i}, ${j}, 'product', this.value)" />
+                            <input type="text" placeholder="Giá" value="${p.price}" onblur="formatAllPrices()" oninput="handleTypingPrice(this, ${i}, ${j})" onkeydown="handleEnterKey(event)"/>
+                            <button onclick="removeProduct(${i}, ${j})">✖</button>
+                        </div>
+                        `).join('')}
+                        <button class="add-product" onclick="addProduct(${i})">+ Thêm sản phẩm</button>
+                    </div>
+                    <div style="margin-top: 10px; font-weight: bold;">
+                        Tổng cộng: ${b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0).toLocaleString()} ${document.getElementById('currency').value}
+                    </div>
+                    `;
+                box.querySelector('input[placeholder="Giá"]').addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.target.blur(); // Mất focus để kích hoạt onblur
+                    }
+                });
+                container.appendChild(box);
+            });
+            calculateAll();
+        }
+
+        function handleEnter(e, index) {
+            if (e.key === "Enter") {
+                if (buyers[index].products.length === 0) {
+                    addProduct(index);
+                }
+            }
+        }
+
+        function formatCurrency(value) {
+            const currency = document.getElementById('currency').value;
+            const number = parseFloat(value) || 0;
+            return number.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ' ' + currency;
+        }
+
+
+        function updateAllProductsList() {
+            const allProductsList = document.getElementById('all-products-list');
+            allProductsList.innerHTML = '';
+
+            buyers.forEach(buyer => {
+                buyer.products.forEach(product => {
+                    const nameDiv = document.createElement('div');
+                    nameDiv.textContent = product.product;
+
+                    const priceDiv = document.createElement('div');
+                    priceDiv.textContent = formatCurrency(product.price);
+
+                    allProductsList.appendChild(nameDiv);
+                    allProductsList.appendChild(priceDiv);
+                });
+            });
+        }
+
+        function handleTypingPrice(input, buyerIndex, productIndex) {
+            const raw = input.value.replace(/[^0-9]/g, '');
+            if (raw === '') {
+                input.value = '';
+                updateProduct(buyerIndex, productIndex, 'price', '');
+                return;
+            }
+            const value = parseInt(raw) * 1000;
+            updateProduct(buyerIndex, productIndex, 'price', value);
+        }
+
+        function formatAllPrices() {
+            document.querySelectorAll('.product-row input[placeholder="Giá"]').forEach((input, i) => {
+                const buyerIndex = parseInt(input.closest('.buyer-box').dataset.index);
+                const productIndex = Array.from(input.closest('.products').querySelectorAll('.product-row')).indexOf(input.closest('.product-row'));
+                const price = buyers[buyerIndex]?.products[productIndex]?.price || 0;
+                const currency = document.getElementById('currency').value;
+                if (price) {
+                    input.value = parseInt(price).toLocaleString() + ' ' + currency;
+                }
+            });
+
+            updateAllProductsList(); // cập nhật lại box Tất cả sản phẩm
+        }
+
+        function handleEnterKey(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault(); // Ngăn form bị submit nếu có
+                formatAllPrices(); // Gọi format sau khi nhấn Enter
+                event.target.blur(); // Mất focus để kích hoạt onblur nếu muốn
+            }
+        }
+
+        function saveTeamSize() {
+            const value = parseInt(document.getElementById('teamSize').value) || 1;
+            localStorage.setItem('teamSize', value);
+        }
+
+        const savedTeamSize = parseInt(localStorage.getItem('teamSize'));
+        if (!isNaN(savedTeamSize)) {
+            document.getElementById('teamSize').value = savedTeamSize;
+        }
+
+
+
+        render();
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+</body>
+
+</html>
