@@ -207,8 +207,44 @@
         .all-products-list li:hover {
             background-color: #e3f2fd;
         }
+
+        .corner-icon {
+            position: absolute;
+            top: 20px;
+            left: 80px;
+            width: 145px;
+            height: 105px;
+            z-index: 999;
+        }
+
+        .simple-footer {
+            color: #222;
+            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            padding: 20px 10px;
+            border-top: 1px solid #ccc;
+            margin-top: 40px;
+            animation: fadeIn 1s ease-in-out;
+        }
+
+        .simple-footer .emoji {
+            font-size: 18px;
+            margin: 0 4px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
     </style>
 </head>
+<img src="./logo1.png" alt="Icon" class="corner-icon" />
 
 <body>
 
@@ -242,6 +278,13 @@
 
 
     <div class="summary-box" id="summary"></div>
+
+    <footer class="simple-footer">
+        <p><span class="emoji">✨</span> This website was created by <strong>Tune</strong> <span class="emoji">💻</span>
+        </p>
+    </footer>
+
+
 
     <script>
         let buyers = JSON.parse(localStorage.getItem('buyers') || '[]');
