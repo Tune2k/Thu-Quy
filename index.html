@@ -456,37 +456,43 @@
             buyers.forEach((b, i) => {
                 const box = document.createElement('div');
                 box.className = 'buyer-box';
-                box.dataset.index = i; // dùng cho formatAllPrices
+                box.dataset.index = i;
                 box.innerHTML = `
-                    <div class="buyer-header">
-                        <input placeholder="Tên người mua..." value="${b.name}" 
-                        onkeydown="handleEnter(event, ${i})" 
-                        onchange="updateBuyer(${i}, 'name', this.value)" />
-                        <button class="remove-buyer" onclick="removeBuyer(${i})">🗑️</button>
-                    </div>
-                    <div class="products">
-                        ${b.products.map((p, j) => `
-                        <div class="product-row">
-                            <input placeholder="Sản phẩm" value="${p.product}" onchange="updateProduct(${i}, ${j}, 'product', this.value)" />
-                            <input type="text" placeholder="Giá" value="${p.price}" onblur="formatAllPrices()" oninput="handleTypingPrice(this, ${i}, ${j})" onkeydown="handleEnterKey(event)"/>
-                            <button onclick="removeProduct(${i}, ${j})">✖</button>
-                        </div>
-                        `).join('')}
-                        <button class="add-product" onclick="addProduct(${i})">+ Thêm sản phẩm</button>
-                    </div>
-                    <div style="margin-top: 10px; font-weight: bold;">
-                        Tổng cộng: ${b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0).toLocaleString()} ${document.getElementById('currency').value}
-                    </div>
-                    `;
-                box.querySelector('input[placeholder="Giá"]').addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        e.target.blur(); // Mất focus để kích hoạt onblur
-                    }
-                });
+            <div class="buyer-header">
+                <input placeholder="Tên người mua..." value="${b.name}" 
+                onkeydown="handleEnter(event, ${i})" 
+                onchange="updateBuyer(${i}, 'name', this.value)" />
+                <button class="remove-buyer" onclick="removeBuyer(${i})">🗑️</button>
+            </div>
+            <div class="products">
+                ${b.products.map((p, j) => `
+                <div class="product-row">
+                    <input placeholder="Sản phẩm" value="${p.product}" onchange="updateProduct(${i}, ${j}, 'product', this.value)" />
+                    <input type="text" placeholder="Giá" value="${p.price}" onblur="formatAllPrices()" oninput="handleTypingPrice(this, ${i}, ${j})" onkeydown="handleEnterKey(event)" />
+                    <button onclick="removeProduct(${i}, ${j})">✖</button>
+                </div>
+                `).join('')}
+                <button class="add-product" onclick="addProduct(${i})">+ Thêm sản phẩm</button>
+            </div>
+            <div style="margin-top: 10px; font-weight: bold;">
+                Tổng cộng: ${b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0).toLocaleString()} ${document.getElementById('currency').value}
+            </div>
+        `;
+
+                const priceInput = box.querySelector('input[placeholder="Giá"]');
+                if (priceInput) {
+                    priceInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.target.blur();
+                        }
+                    });
+                }
+
                 container.appendChild(box);
             });
             calculateAll();
         }
+
 
         function handleEnter(e, index) {
             if (e.key === "Enter") {
