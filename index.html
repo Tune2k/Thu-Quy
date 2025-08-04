@@ -209,13 +209,24 @@
         }
 
         .corner-icon {
-    position: absolute;
-    top: 10px;
-    left: 10px;
-    width: 40px;
-    height: 40px;
-    z-index: 999;
-}
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 80px;
+            height: auto;
+            max-width: 20vw;
+            max-height: 15vh;
+            z-index: 999;
+            object-fit: contain;
+        }
+
+        @media (max-width: 600px) {
+            .corner-icon {
+                width: 60px;
+                top: 8px;
+                left: 8px;
+            }
+        }
 
         .simple-footer {
             color: #222;
@@ -244,11 +255,11 @@
         }
     </style>
 </head>
-<img src="./logo1.png" alt="Icon" class="corner-icon" />
 
 <body>
 
     <h1>💸 Chia Tiền Nhóm</h1>
+    <img src="./logo1.png" alt="Icon" class="corner-icon" />
 
     <div class="controls">
         <button onclick="addBuyer()">➕ Thêm Người Mua</button>
