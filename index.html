@@ -613,10 +613,12 @@
         function handleEnterKey(event) {
             if (event.key === 'Enter') {
                 event.preventDefault(); // Ngăn form bị submit nếu có
-                formatAllPrices(); // Gọi format sau khi nhấn Enter
-                event.target.blur(); // Mất focus để kích hoạt onblur nếu muốn
+                formatAllPrices();      // Cập nhật hiển thị định dạng giá
+                event.target.blur();    // Kích hoạt onblur nếu muốn
+                render();               // ✅ Gọi lại render để cập nhật tổng tiền
             }
         }
+
 
         function saveTeamSize() {
             const value = parseInt(document.getElementById('teamSize').value) || 1;
