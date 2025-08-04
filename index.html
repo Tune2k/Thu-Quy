@@ -254,6 +254,8 @@
             }
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
 </head>
 
 <body>
@@ -272,7 +274,7 @@
                 <option value="€">€</option>
             </select>
         </label>
-        <button onclick="exportExcel()">📥 Xuất Excel</button>
+        <button id="exportBtn">📥 Xuất Excel</button>
 
     </div>
 
@@ -298,6 +300,7 @@
 
 
     <script>
+
         let buyers = JSON.parse(localStorage.getItem('buyers') || '[]');
 
         function saveData() {
@@ -386,125 +389,7 @@
         }
 
 
-        function exportExcel() {
-            const wb = XLSX.utils.book_new();
-            const allData = [];
-            const merges = [];
-            const styles = {};
 
-            let rowIndex = 0;
-
-            // === Bảng: Chi tiết từng người mua ===
-            buyers.forEach(buyer => {
-                // Tiêu đề người mua
-                allData.push([`Người mua: ${buyer.name}`]);
-                merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
-                rowIndex++;
-
-                // Dòng tiêu đề bảng sản phẩm
-                const table = [["Sản phẩm", "Giá"]];
-                buyer.products.forEach(p => {
-                    table.push([p.product, Number(p.price)]);
-                });
-                const total = buyer.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
-                table.push(["Tổng cộng", total]);
-
-                table.forEach((row, i) => {
-                    allData.push(row);
-                    rowIndex++;
-                });
-
-                allData.push([]);
-                rowIndex++;
-            });
-
-            // === Bảng: Tổng hợp tất cả sản phẩm ===
-            allData.push(["Tổng hợp tất cả sản phẩm"]);
-            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
-            rowIndex++;
-
-            const allProducts = [["Sản phẩm", "Giá"]];
-            buyers.forEach(buyer => {
-                buyer.products.forEach(p => {
-                    allProducts.push([p.product, Number(p.price)]);
-                });
-            });
-            const total = buyers.reduce((sum, b) => sum + b.products.reduce((s, p) => s + parseFloat(p.price || 0), 0), 0);
-            allProducts.push(["Tổng cộng tất cả", total]);
-
-            allProducts.forEach(row => {
-                allData.push(row);
-                rowIndex++;
-            });
-
-            allData.push([]);
-            rowIndex++;
-
-            // === Bảng: Tổng kết chi trả ===
-            const teamSize = parseInt(document.getElementById('teamSize').value) || 1;
-            const currency = document.getElementById('currency').value;
-
-            const totals = buyers.map(b => b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0));
-            const perPerson = Math.round(total / teamSize);
-
-            allData.push(["Tổng kết chi trả"]);
-            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
-            rowIndex++;
-
-            const summary = [["Người mua", "Cần trả"]];
-            buyers.forEach((b, i) => {
-                const diff = perPerson - totals[i];
-                const formatted = Math.abs(diff).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
-                if (diff > 0) {
-                    summary.push([b.name, `Nộp thêm ${formatted}`]);
-                } else {
-                    summary.push([b.name, `Trả lại ${formatted}`]);
-                }
-            });
-
-            if (teamSize > buyers.length) {
-                const othersCount = teamSize - buyers.length;
-                const amount = perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
-                summary.push([`Những người còn lại (${othersCount} người)`, `Nộp thêm ${amount}`]);
-            }
-
-
-
-            summary.forEach(row => {
-                allData.push(row);
-                rowIndex++;
-            });
-
-            // === Tạo sheet ===
-            const ws = XLSX.utils.aoa_to_sheet(allData);
-            ws['!merges'] = merges;
-            ws['!cols'] = [{ wch: 25 }, { wch: 25 }]; // Độ rộng cột
-
-            // Thêm border cho tất cả các ô có giá trị
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            for (let R = range.s.r; R <= range.e.r; ++R) {
-                for (let C = range.s.c; C <= range.e.c; ++C) {
-                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
-                    const cell = ws[cell_address];
-                    if (cell && cell.v !== undefined) {
-                        if (!cell.s) cell.s = {};
-                        cell.s.border = {
-                            top: { style: "thin", color: { rgb: "000000" } },
-                            bottom: { style: "thin", color: { rgb: "000000" } },
-                            left: { style: "thin", color: { rgb: "000000" } },
-                            right: { style: "thin", color: { rgb: "000000" } }
-                        };
-                    }
-                }
-            }
-
-
-            // Ghi sheet
-            XLSX.utils.book_append_sheet(wb, ws, "Tổng hợp");
-
-            // Xuất file
-            XLSX.writeFile(wb, "chia_tien.xlsx");
-        }
 
 
 
@@ -634,6 +519,141 @@
 
         render();
     </script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const exportBtn = document.getElementById("exportBtn");
+            if (exportBtn) {
+                exportBtn.addEventListener("click", () => {
+                    exportExcel(); // đảm bảo là sự kiện user
+                });
+            } else {
+                console.warn("Không tìm thấy nút #exportBtn");
+            }
+        });
+
+        function exportExcel() {
+            const wb = XLSX.utils.book_new();
+            const allData = [];
+            const merges = [];
+            const styles = {};
+
+            let rowIndex = 0;
+
+            // === Bảng: Chi tiết từng người mua ===
+            buyers.forEach(buyer => {
+                // Tiêu đề người mua
+                allData.push([`Người mua: ${buyer.name}`]);
+                merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+                rowIndex++;
+
+                // Dòng tiêu đề bảng sản phẩm
+                const table = [["Sản phẩm", "Giá"]];
+                buyer.products.forEach(p => {
+                    table.push([p.product, Number(p.price)]);
+                });
+                const total = buyer.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0);
+                table.push(["Tổng cộng", total]);
+
+                table.forEach((row, i) => {
+                    allData.push(row);
+                    rowIndex++;
+                });
+
+                allData.push([]);
+                rowIndex++;
+            });
+
+            // === Bảng: Tổng hợp tất cả sản phẩm ===
+            allData.push(["Tổng hợp tất cả sản phẩm"]);
+            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+            rowIndex++;
+
+            const allProducts = [["Sản phẩm", "Giá"]];
+            buyers.forEach(buyer => {
+                buyer.products.forEach(p => {
+                    allProducts.push([p.product, Number(p.price)]);
+                });
+            });
+            const total = buyers.reduce((sum, b) => sum + b.products.reduce((s, p) => s + parseFloat(p.price || 0), 0), 0);
+            allProducts.push(["Tổng cộng tất cả", total]);
+
+            allProducts.forEach(row => {
+                allData.push(row);
+                rowIndex++;
+            });
+
+            allData.push([]);
+            rowIndex++;
+
+            // === Bảng: Tổng kết chi trả ===
+            const teamSize = parseInt(document.getElementById('teamSize').value) || 1;
+            const currency = document.getElementById('currency').value;
+
+            const totals = buyers.map(b => b.products.reduce((sum, p) => sum + parseFloat(p.price || 0), 0));
+            const perPerson = Math.round(total / teamSize);
+
+            allData.push(["Tổng kết chi trả"]);
+            merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 1 } });
+            rowIndex++;
+
+            const summary = [["Người mua", "Cần trả"]];
+            buyers.forEach((b, i) => {
+                const diff = perPerson - totals[i];
+                const formatted = Math.abs(diff).toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                if (diff > 0) {
+                    summary.push([b.name, `Nộp thêm ${formatted}`]);
+                } else {
+                    summary.push([b.name, `Trả lại ${formatted}`]);
+                }
+            });
+
+            if (teamSize > buyers.length) {
+                const othersCount = teamSize - buyers.length;
+                const amount = perPerson.toLocaleString(undefined, { maximumFractionDigits: 2 }) + ` ${currency}`;
+                summary.push([`Những người còn lại (${othersCount} người)`, `Nộp thêm ${amount}`]);
+            }
+
+
+
+            summary.forEach(row => {
+                allData.push(row);
+                rowIndex++;
+            });
+
+            // === Tạo sheet ===
+            const ws = XLSX.utils.aoa_to_sheet(allData);
+            ws['!merges'] = merges;
+            ws['!cols'] = [{ wch: 25 }, { wch: 25 }]; // Độ rộng cột
+
+            // Thêm border cho tất cả các ô có giá trị
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let R = range.s.r; R <= range.e.r; ++R) {
+                for (let C = range.s.c; C <= range.e.c; ++C) {
+                    const cell_address = XLSX.utils.encode_cell({ r: R, c: C });
+                    const cell = ws[cell_address];
+                    if (cell && cell.v !== undefined) {
+                        if (!cell.s) cell.s = {};
+                        cell.s.border = {
+                            top: { style: "thin", color: { rgb: "000000" } },
+                            bottom: { style: "thin", color: { rgb: "000000" } },
+                            left: { style: "thin", color: { rgb: "000000" } },
+                            right: { style: "thin", color: { rgb: "000000" } }
+                        };
+                    }
+                }
+            }
+
+
+            // Ghi sheet
+            XLSX.utils.book_append_sheet(wb, ws, "Tổng hợp");
+
+            // Xuất file
+            const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+            const blob = new Blob([wbout], { type: "application/octet-stream" });
+            saveAs(blob, "chia_tien.xlsx");
+        }
+    </script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
 </body>
